@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confidential VM Workflow Diagrams - Azure & GCP</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azure-primary: #0078d4;
+            --azure-dark: #106ebe;
+            --azure-light: #50e6ff;
+            --gcp-primary: #4285f4;
+            --gcp-red: #ea4335;
+            --gcp-yellow: #fbbc04;
+            --gcp-green: #34a853;
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --bg-elevated: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--azure-primary), var(--gcp-primary));
+            border-radius: 2px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--azure-light), var(--gcp-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .diagram-section {
+            margin-bottom: 60px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .provider-badge {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .azure-badge {
+            background: linear-gradient(135deg, var(--azure-primary), var(--azure-dark));
+            color: white;
+        }
+
+        .gcp-badge {
+            background: linear-gradient(135deg, var(--gcp-primary), #1a73e8);
+            color: white;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .diagram-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            padding: 8px 12px;
+            background: var(--bg-elevated);
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .info-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .info-card h4 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .info-card ul {
+            list-style: none;
+        }
+
+        .info-card li {
+            padding: 6px 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .info-card li::before {
+            content: '→';
+            color: var(--azure-light);
+            font-weight: bold;
+        }
+
+        .gcp-section .info-card li::before {
+            color: var(--gcp-green);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 40px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: var(--bg-elevated);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table td {
+            font-size: 0.95rem;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tech-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 2px;
+        }
+
+        .tech-amd {
+            background: rgba(237, 28, 36, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(237, 28, 36, 0.3);
+        }
+
+        .tech-intel {
+            background: rgba(0, 113, 197, 0.15);
+            color: #50e6ff;
+            border: 1px solid rgba(0, 113, 197, 0.3);
+        }
+
+        .tech-nvidia {
+            background: rgba(118, 185, 0, 0.15);
+            color: #76b900;
+            border: 1px solid rgba(118, 185, 0, 0.3);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .diagram-container {
+                padding: 16px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Confidential VM Workflow Diagrams</h1>
+            <p class="subtitle">Hardware-based Trusted Execution Environments: Azure vs GCP Architecture</p>
+        </header>
+
+        <!-- Azure Section -->
+        <section class="diagram-section azure-section">
+            <div class="section-header">
+                <span class="provider-badge azure-badge">Microsoft Azure</span>
+                <h2 class="section-title">Confidential VM Architecture</h2>
+            </div>
+
+            <!-- Azure Boot & Attestation Flow -->
+            <div class="diagram-container">
+                <div class="diagram-title">// Azure CVM Boot & Attestation Workflow</div>
+                <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0078d4', 'primaryTextColor': '#fff', 'primaryBorderColor': '#106ebe', 'lineColor': '#50e6ff', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+flowchart TB
+    subgraph USER["👤 User/Tenant"]
+        A[Request CVM Creation<br/>DCasv5/ECasv5/DCesv5]
+    end
+
+    subgraph AZURE_CP["☁️ Azure Control Plane"]
+        B[Azure Resource Manager]
+        C[Select Host with<br/>SEV-SNP or TDX CPU]
+    end
+
+    subgraph HOST["🖥️ Physical Host"]
+        D[Azure Hypervisor<br/>Cannot access CVM memory]
+        
+        subgraph AMD_SP["🔐 AMD Secure Processor / Intel TDX Module"]
+            E[Generate VM Encryption Key]
+            F[Initialize Memory Encryption]
+            G[Create Attestation Report]
+        end
+    end
+
+    subgraph CVM["🛡️ Confidential VM"]
+        H[UEFI Secure Boot]
+        I[vTPM Initialization]
+        J[Guest OS Boot<br/>Linux/Windows]
+        K[Application Workload]
+    end
+
+    subgraph ATTESTATION["✓ Attestation Flow"]
+        L[Azure Attestation Service]
+        M[Verify Hardware Evidence]
+        N[Release Encryption Keys]
+        O[Azure Key Vault / Managed HSM]
+    end
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> H
+    H --> I
+    I --> J
+    J --> K
+    
+    G --> L
+    L --> M
+    M --> N
+    N --> O
+    O -.->|Sealed Keys| I
+
+    style AMD_SP fill:#ed1c24,stroke:#ff6b6b,color:#fff
+    style CVM fill:#0078d4,stroke:#50e6ff,color:#fff
+    style ATTESTATION fill:#107c10,stroke:#6ccb5f,color:#fff
+                </div>
+            </div>
+
+            <!-- Azure Runtime Architecture -->
+            <div class="diagram-container">
+                <div class="diagram-title">// Azure CVM Runtime Memory Protection</div>
+                <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0078d4'}}}%%
+flowchart LR
+    subgraph UNTRUSTED["⚠️ UNTRUSTED ZONE"]
+        direction TB
+        HV[Azure Hypervisor]
+        MGMT[Host Management]
+        OTHER[Other VMs]
+        PHYS[Physical Access]
+    end
+
+    subgraph BOUNDARY["🔒 ENCRYPTION BOUNDARY"]
+        direction TB
+        ENC[AES-256 Memory Encryption<br/>Hardware Key in CPU]
+    end
+
+    subgraph TRUSTED["✅ TRUSTED ZONE - CVM"]
+        direction TB
+        APP[Application Code & Data]
+        OS[Guest OS Kernel]
+        VTPM[vTPM - Keys & Secrets]
+        MEM[Encrypted Memory Pages]
+    end
+
+    UNTRUSTED -->|"❌ Sees Only Ciphertext"| BOUNDARY
+    BOUNDARY -->|"✓ Decrypted On-Die"| TRUSTED
+
+    style UNTRUSTED fill:#6e1414,stroke:#ff6b6b,color:#fff
+    style BOUNDARY fill:#ed1c24,stroke:#ff6b6b,color:#fff
+    style TRUSTED fill:#0078d4,stroke:#50e6ff,color:#fff
+                </div>
+            </div>
+
+            <!-- Azure GPU TEE -->
+            <div class="diagram-container">
+                <div class="diagram-title">// Azure Confidential GPU (NCC H100 v5) Architecture</div>
+                <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#76b900'}}}%%
+flowchart TB
+    subgraph CPU_TEE["🔐 CPU TEE (AMD SEV-SNP)"]
+        CPU_MEM[Encrypted CPU Memory]
+        DRIVER[NVIDIA Driver<br/>Inside TEE]
+        APP[AI/ML Application]
+    end
+
+    subgraph PCIE["🔗 PCIe Bus"]
+        BOUNCE[Encrypted Bounce Buffer]
+        SPDM[SPDM Secure Channel<br/>AES-GCM Encryption]
+    end
+
+    subgraph GPU_TEE["🎮 GPU TEE (H100)"]
+        GPU_RoT[On-Die Root of Trust]
+        HBM[Encrypted HBM3 Memory<br/>94GB]
+        CUDA[CUDA Kernels]
+    end
+
+    subgraph ATTEST["✓ Combined Attestation"]
+        CPU_ATT[CPU Attestation Report]
+        GPU_ATT[GPU Attestation Report]
+        VERIFY[Verify Both TEEs]
+    end
+
+    APP --> DRIVER
+    DRIVER --> BOUNCE
+    BOUNCE --> SPDM
+    SPDM --> GPU_RoT
+    GPU_RoT --> HBM
+    HBM --> CUDA
+
+    CPU_MEM --> CPU_ATT
+    GPU_RoT --> GPU_ATT
+    CPU_ATT --> VERIFY
+    GPU_ATT --> VERIFY
+
+    style CPU_TEE fill:#0078d4,stroke:#50e6ff,color:#fff
+    style GPU_TEE fill:#76b900,stroke:#9be84a,color:#fff
+    style PCIE fill:#ed1c24,stroke:#ff6b6b,color:#fff
+    style ATTEST fill:#107c10,stroke:#6ccb5f,color:#fff
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>Supported Technologies</h4>
+                    <ul>
+                        <li><span class="tech-tag tech-amd">AMD SEV-SNP</span> DCasv5/ECasv5 series</li>
+                        <li><span class="tech-tag tech-intel">Intel TDX</span> DCesv5/ECesv5 series</li>
+                        <li><span class="tech-tag tech-intel">Intel SGX</span> DCsv3/DCdsv3 (enclaves)</li>
+                        <li><span class="tech-tag tech-nvidia">NVIDIA H100</span> NCC H100 v5 series</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h4>Key Security Features</h4>
+                    <ul>
+                        <li>Hardware memory encryption (AES-256)</li>
+                        <li>CPU state encryption (registers)</li>
+                        <li>Memory integrity protection</li>
+                        <li>Hardware-rooted attestation</li>
+                        <li>Confidential OS disk encryption</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h4>Attestation Options</h4>
+                    <ul>
+                        <li>Azure Attestation Service (managed)</li>
+                        <li>Intel Trust Authority (TDX)</li>
+                        <li>Guest attestation tooling</li>
+                        <li>NVIDIA GPU attestation</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- GCP Section -->
+        <section class="diagram-section gcp-section">
+            <div class="section-header">
+                <span class="provider-badge gcp-badge">Google Cloud</span>
+                <h2 class="section-title">Confidential VM Architecture</h2>
+            </div>
+
+            <!-- GCP Boot & Attestation Flow -->
+            <div class="diagram-container">
+                <div class="diagram-title">// GCP CVM Boot & Attestation Workflow</div>
+                <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#4285f4', 'primaryTextColor': '#fff', 'primaryBorderColor': '#1a73e8', 'lineColor': '#34a853', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+flowchart TB
+    subgraph USER["👤 User/Tenant"]
+        A[Request Confidential VM<br/>N2D/C2D/C3 + Confidential Flag]
+    end
+
+    subgraph GCP_CP["☁️ GCP Control Plane"]
+        B[Compute Engine API]
+        C[Select Host with<br/>AMD EPYC or Intel Xeon]
+    end
+
+    subgraph HOST["🖥️ Physical Host + Google Titanium"]
+        D[KVM Hypervisor<br/>Cannot access CVM memory]
+        
+        subgraph HW_SEC["🔐 Hardware Security"]
+            E[AMD SEV/SEV-SNP<br/>or Intel TDX]
+            F[Memory Encryption Engine]
+            G[Hardware Attestation]
+        end
+    end
+
+    subgraph CVM["🛡️ Confidential VM"]
+        H[Signed UEFI Firmware]
+        I[Google-managed vTPM<br/>or Hardware vTPM]
+        J[Guest OS<br/>SEV_SNP_CAPABLE / TDX_CAPABLE]
+        K[Customer Workload]
+    end
+
+    subgraph ATTESTATION["✓ Attestation Options"]
+        L[Google Cloud Attestation]
+        M[Intel Trust Authority]
+        N[Go-TPM Tools<br/>Direct Hardware Query]
+        O[Verify Launch Measurements]
+    end
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> H
+    H --> I
+    I --> J
+    J --> K
+    
+    G --> L
+    G --> M
+    G --> N
+    L --> O
+    M --> O
+    N --> O
+
+    style HW_SEC fill:#ea4335,stroke:#ff8a80,color:#fff
+    style CVM fill:#4285f4,stroke:#8ab4f8,color:#fff
+    style ATTESTATION fill:#34a853,stroke:#81c995,color:#fff
+                </div>
+            </div>
+
+            <!-- GCP Technology Variants -->
+            <div class="diagram-container">
+                <div class="diagram-title">// GCP Confidential Computing Technology Stack</div>
+                <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#4285f4'}}}%%
+flowchart TB
+    subgraph SEV["AMD SEV (1st Gen)"]
+        SEV_DESC[Memory Encryption Only<br/>N2D, C2D, C3D machines]
+        SEV_TPM[Google-managed vTPM<br/>Attestation]
+    end
+
+    subgraph SEV_SNP["AMD SEV-SNP (Enhanced)"]
+        SNP_DESC[Memory Encryption +<br/>Integrity Protection<br/>N2D machines]
+        SNP_ATT[Hardware-Rooted Attestation<br/>AMD Secure Processor]
+        SNP_INT[Memory Integrity<br/>Anti-Replay Protection]
+    end
+
+    subgraph TDX["Intel TDX"]
+        TDX_DESC[Trust Domain Extensions<br/>C3 machines]
+        TDX_MOD[TDX Module<br/>SEAM Mode]
+        TDX_ATT[Intel Trust Authority<br/>or Self-Attestation]
+    end
+
+    subgraph GPU["Confidential GPU"]
+        GPU_DESC[NVIDIA H100 + A3<br/>machines]
+        GPU_CC[NVIDIA Confidential<br/>Computing Mode]
+        GPU_ATT[GPU + CPU Combined<br/>Attestation]
+    end
+
+    SEV -->|"Upgrade Path"| SEV_SNP
+    SEV_SNP ---|"Alternative"| TDX
+    SEV_SNP --> GPU
+    TDX --> GPU
+
+    style SEV fill:#fbbc04,stroke:#fdd663,color:#000
+    style SEV_SNP fill:#ea4335,stroke:#ff8a80,color:#fff
+    style TDX fill:#4285f4,stroke:#8ab4f8,color:#fff
+    style GPU fill:#34a853,stroke:#81c995,color:#fff
+                </div>
+            </div>
+
+            <!-- GCP Runtime Protection -->
+            <div class="diagram-container">
+                <div class="diagram-title">// GCP CVM Security Boundaries</div>
+                <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#4285f4'}}}%%
+flowchart LR
+    subgraph EXCLUDED["❌ EXCLUDED FROM TCB"]
+        direction TB
+        GCP_OP[GCP Operators]
+        HV[KVM Hypervisor]
+        TITAN[Google Titanium<br/>Security Chip]
+        HW[Host Hardware/Firmware]
+    end
+
+    subgraph HARDWARE["🔐 HARDWARE ROOT OF TRUST"]
+        direction TB
+        AMD_SP[AMD Secure Processor]
+        TDX_MOD[Intel TDX Module]
+        KEYS[Per-VM Encryption Keys<br/>Never Exported]
+    end
+
+    subgraph TCB["✅ TRUSTED COMPUTING BASE"]
+        direction TB
+        UEFI[Signed UEFI/OVMF]
+        KERNEL[Guest Kernel]
+        VTPM[vTPM Instance]
+        APPS[Applications & Data]
+    end
+
+    EXCLUDED -->|"Cannot Access<br/>Encrypted Memory"| HARDWARE
+    HARDWARE -->|"Protects"| TCB
+
+    style EXCLUDED fill:#5f1414,stroke:#ea4335,color:#fff
+    style HARDWARE fill:#ea4335,stroke:#ff8a80,color:#fff
+    style TCB fill:#4285f4,stroke:#8ab4f8,color:#fff
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>Machine Types</h4>
+                    <ul>
+                        <li><span class="tech-tag tech-amd">SEV</span> N2D, C2D, C3D, C4D</li>
+                        <li><span class="tech-tag tech-amd">SEV-SNP</span> N2D (Milan+)</li>
+                        <li><span class="tech-tag tech-intel">TDX</span> C3 (Sapphire Rapids)</li>
+                        <li><span class="tech-tag tech-nvidia">GPU</span> A3 (H100 attached)</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h4>Key Security Features</h4>
+                    <ul>
+                        <li>AES-128/256 memory encryption</li>
+                        <li>Signed UEFI firmware verification</li>
+                        <li>Launch measurement signing</li>
+                        <li>Integrity protection (SNP/TDX)</li>
+                        <li>Google Titanium integration</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h4>Attestation Options</h4>
+                    <ul>
+                        <li>Google Cloud Attestation (SEV)</li>
+                        <li>AMD SEV Guest tools (SNP)</li>
+                        <li>Intel TDX Guest tools</li>
+                        <li>Go-TPM for hardware reports</li>
+                        <li>Custom attestation services</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Table -->
+        <section class="diagram-section">
+            <div class="section-header">
+                <h2 class="section-title">Side-by-Side Comparison</h2>
+            </div>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Azure Confidential VMs</th>
+                        <th>GCP Confidential VMs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>CPU TEE Technologies</strong></td>
+                        <td>
+                            <span class="tech-tag tech-amd">AMD SEV-SNP</span>
+                            <span class="tech-tag tech-intel">Intel TDX</span>
+                            <span class="tech-tag tech-intel">Intel SGX</span>
+                        </td>
+                        <td>
+                            <span class="tech-tag tech-amd">AMD SEV</span>
+                            <span class="tech-tag tech-amd">AMD SEV-SNP</span>
+                            <span class="tech-tag tech-intel">Intel TDX</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GPU TEE Support</strong></td>
+                        <td>
+                            <span class="tech-tag tech-nvidia">NVIDIA H100</span> NCC H100 v5
+                        </td>
+                        <td>
+                            <span class="tech-tag tech-nvidia">NVIDIA H100</span> A3 machines
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Memory Encryption</strong></td>
+                        <td>AES-256 (hardware key per VM)</td>
+                        <td>AES-128/256 (hardware key per VM)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Memory Integrity</strong></td>
+                        <td>✅ SEV-SNP / TDX</td>
+                        <td>✅ SEV-SNP / TDX only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OS Disk Encryption</strong></td>
+                        <td>Confidential OS disk (PMK/CMK)</td>
+                        <td>Standard encryption + vTPM sealing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>vTPM</strong></td>
+                        <td>Hardware-protected vTPM in TEE</td>
+                        <td>Google-managed or hardware vTPM</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Attestation Service</strong></td>
+                        <td>Azure Attestation + Intel Trust Authority</td>
+                        <td>Google Cloud Attestation + Intel Trust Authority</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hypervisor Trust</strong></td>
+                        <td>Excluded from TCB</td>
+                        <td>Excluded from TCB</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Code Changes Required</strong></td>
+                        <td>None (lift & shift)</td>
+                        <td>None (lift & shift)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ed1c24;"></div>
+                    <span>AMD Technologies</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #0071c5;"></div>
+                    <span>Intel Technologies</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #76b900;"></div>
+                    <span>NVIDIA Technologies</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #107c10;"></div>
+                    <span>Attestation/Verification</span>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Confidential VM Architecture Diagrams • Hardware-based TEE Comparison</p>
+            <p style="margin-top: 8px; font-size: 0.8rem;">Based on AMD SEV-SNP, Intel TDX, and NVIDIA Confidential Computing specifications</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

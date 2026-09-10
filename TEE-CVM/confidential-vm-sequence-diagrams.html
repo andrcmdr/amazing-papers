@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confidential VM Sequence Diagrams - Azure & GCP</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azure-primary: #0078d4;
+            --azure-light: #50e6ff;
+            --gcp-primary: #4285f4;
+            --gcp-green: #34a853;
+            --gcp-red: #ea4335;
+            --gcp-yellow: #fbbc04;
+            --nvidia-green: #76b900;
+            --bg-primary: #0a0e14;
+            --bg-secondary: #0f1419;
+            --bg-card: #151b23;
+            --bg-elevated: #1c2430;
+            --text-primary: #e6edf3;
+            --text-secondary: #7d8590;
+            --text-muted: #545d68;
+            --border: #2d333b;
+            --accent-red: #f85149;
+            --accent-green: #3fb950;
+            --accent-blue: #58a6ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .page-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .header-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, rgba(0, 120, 212, 0.2), rgba(66, 133, 244, 0.2));
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .provider-section {
+            margin-bottom: 80px;
+        }
+
+        .provider-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .provider-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .azure-logo {
+            background: linear-gradient(135deg, var(--azure-primary), #106ebe);
+        }
+
+        .gcp-logo {
+            background: linear-gradient(135deg, var(--gcp-primary), #1a73e8);
+        }
+
+        .provider-title {
+            flex: 1;
+        }
+
+        .provider-title h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .provider-title p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .diagram-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
+
+        .diagram-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .diagram-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .diagram-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .icon-boot { background: rgba(248, 81, 73, 0.15); color: var(--accent-red); }
+        .icon-attest { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); }
+        .icon-runtime { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+        .icon-gpu { background: rgba(118, 185, 0, 0.15); color: var(--nvidia-green); }
+
+        .diagram-title h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .diagram-badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-sev { background: rgba(237, 28, 36, 0.15); color: #ff6b6b; border: 1px solid rgba(237, 28, 36, 0.3); }
+        .badge-tdx { background: rgba(0, 113, 197, 0.15); color: #58a6ff; border: 1px solid rgba(0, 113, 197, 0.3); }
+        .badge-gpu { background: rgba(118, 185, 0, 0.15); color: #9be84a; border: 1px solid rgba(118, 185, 0, 0.3); }
+
+        .diagram-content {
+            padding: 32px;
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .diagram-description {
+            padding: 20px 24px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+        }
+
+        .description-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .step-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .comparison-section {
+            margin-top: 80px;
+        }
+
+        .comparison-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .comparison-header h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .comparison-header p {
+            color: var(--text-secondary);
+        }
+
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .timeline-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .timeline-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .timeline-header {
+            padding: 16px 20px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .timeline-header h4 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .timeline-content {
+            padding: 20px;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-phase {
+            width: 80px;
+            flex-shrink: 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding-top: 2px;
+        }
+
+        .timeline-detail h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .timeline-detail p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        footer {
+            text-align: center;
+            padding: 48px 24px;
+            border-top: 1px solid var(--border);
+            margin-top: 64px;
+        }
+
+        footer p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            padding: 4px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: transparent;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-tab.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header>
+            <div class="header-badge">Technical Architecture</div>
+            <h1>Confidential VM Sequence Diagrams</h1>
+            <p class="subtitle">Detailed interaction flows for Azure and GCP hardware-based Trusted Execution Environments</p>
+        </header>
+
+        <!-- Azure Section -->
+        <section class="provider-section">
+            <div class="provider-header">
+                <div class="provider-logo azure-logo">Az</div>
+                <div class="provider-title">
+                    <h2>Microsoft Azure</h2>
+                    <p>AMD SEV-SNP & Intel TDX Confidential Virtual Machines</p>
+                </div>
+            </div>
+
+            <!-- Azure Boot Sequence -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-title">
+                        <div class="diagram-icon icon-boot">⚡</div>
+                        <h3>CVM Boot Sequence</h3>
+                    </div>
+                    <span class="diagram-badge badge-sev">AMD SEV-SNP</span>
+                </div>
+                <div class="diagram-content">
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User as 👤 User/Tenant
+    participant ARM as ☁️ Azure Resource Manager
+    participant Host as 🖥️ Host Server
+    participant HV as Hypervisor
+    participant ASP as 🔐 AMD Secure Processor
+    participant CVM as 🛡️ Confidential VM
+
+    User->>ARM: Create CVM (DCasv5/ECasv5)
+    ARM->>Host: Allocate host with SEV-SNP CPU
+    Host->>HV: Initialize VM context
+    
+    rect rgb(40, 20, 20)
+        Note over HV,ASP: Hardware Security Initialization
+        HV->>ASP: Request new VM encryption key
+        ASP->>ASP: Generate unique AES-256 key
+        ASP-->>HV: Return VM key handle (key never exposed)
+        HV->>ASP: Create SNP Guest context
+        ASP->>ASP: Initialize RMP (Reverse Map Table)
+    end
+
+    rect rgb(20, 40, 60)
+        Note over ASP,CVM: Secure Boot Phase
+        ASP->>CVM: Initialize encrypted memory pages
+        CVM->>CVM: UEFI Secure Boot starts
+        CVM->>CVM: Verify firmware signatures
+        CVM->>CVM: Initialize vTPM in protected memory
+        CVM->>CVM: Measure boot components → PCRs
+    end
+
+    rect rgb(20, 50, 20)
+        Note over CVM: Guest OS Boot
+        CVM->>CVM: Load & verify bootloader
+        CVM->>CVM: Load Linux/Windows kernel
+        CVM->>CVM: Kernel initializes (sees normal memory)
+        CVM-->>User: VM Ready - SSH/RDP available
+    end
+                    </div>
+                </div>
+                <div class="diagram-description">
+                    <div class="description-title">Key Steps</div>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">AMD Secure Processor generates a unique per-VM AES-256 encryption key that never leaves the CPU die</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">RMP (Reverse Map Table) tracks page ownership to prevent hypervisor tampering</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">vTPM initializes inside encrypted memory, invisible to hypervisor</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
+                            <span class="step-text">Guest OS boots normally - memory encryption is transparent to workloads</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Azure Attestation Sequence -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-title">
+                        <div class="diagram-icon icon-attest">✓</div>
+                        <h3>Remote Attestation Flow</h3>
+                    </div>
+                    <span class="diagram-badge badge-sev">AMD SEV-SNP</span>
+                </div>
+                <div class="diagram-content">
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 📱 Application
+    participant Guest as 🛡️ CVM Guest OS
+    participant ASP as 🔐 AMD Secure Processor
+    participant MAA as ☁️ Azure Attestation
+    participant KV as 🔑 Azure Key Vault
+    participant AMD as �icing AMD KDS
+
+    App->>Guest: Request attestation
+    Guest->>ASP: SNP_GUEST_REQUEST (get report)
+    
+    rect rgb(40, 20, 20)
+        Note over ASP: Generate Hardware Evidence
+        ASP->>ASP: Collect measurements
+        Note right of ASP: - Launch digest<br/>- Guest policy<br/>- Platform info<br/>- TCB version
+        ASP->>ASP: Sign with VCEK (chip-unique key)
+        ASP-->>Guest: Return SNP Attestation Report
+    end
+
+    Guest->>MAA: Submit attestation report
+    
+    rect rgb(20, 40, 60)
+        Note over MAA,AMD: Verify Hardware Authenticity
+        MAA->>AMD: Fetch VCEK certificate chain
+        AMD-->>MAA: Return AMD Root CA → VCEK
+        MAA->>MAA: Verify signature chain
+        MAA->>MAA: Validate measurements against policy
+        MAA->>MAA: Check TCB version (no rollback)
+    end
+
+    alt Attestation Valid
+        MAA-->>Guest: Issue JWT attestation token
+        Guest->>KV: Request secrets (with JWT)
+        KV->>KV: Verify JWT claims
+        KV-->>App: Release encryption keys/secrets
+    else Attestation Failed
+        MAA-->>Guest: Reject - policy violation
+        Note over App: Cannot access secrets
+    end
+                    </div>
+                </div>
+                <div class="diagram-description">
+                    <div class="description-title">Key Steps</div>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">Application requests attestation report from AMD Secure Processor via SNP guest API</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">Report is signed with VCEK - a chip-unique key rooted in AMD's CA hierarchy</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">Azure Attestation verifies signature chain and validates against customer policy</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
+                            <span class="step-text">Only after successful attestation are secrets released from Key Vault</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Azure Runtime Memory Access -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-title">
+                        <div class="diagram-icon icon-runtime">🔒</div>
+                        <h3>Runtime Memory Protection</h3>
+                    </div>
+                    <span class="diagram-badge badge-sev">SEV-SNP</span>
+                </div>
+                <div class="diagram-content">
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 📱 CVM Application
+    participant MMU as CPU MMU
+    participant ENC as 🔐 Memory Encryption Engine
+    participant RAM as 💾 Physical RAM
+    participant HV as ⚠️ Hypervisor
+    participant RMP as RMP Table
+
+    Note over App,RAM: Normal Memory Access (from inside CVM)
+    App->>MMU: Read virtual address 0x1000
+    MMU->>MMU: Translate VA → PA (0xABCD000)
+    MMU->>RMP: Check page ownership
+    RMP-->>MMU: Page owned by this VM ✓
+    MMU->>ENC: Request physical address
+    ENC->>RAM: Read encrypted bytes
+    RAM-->>ENC: Return ciphertext
+    ENC->>ENC: Decrypt with VM's key
+    ENC-->>App: Return plaintext data ✓
+
+    Note over HV,RAM: Malicious Access Attempt (from hypervisor)
+    HV->>RAM: Direct read 0xABCD000
+    RAM-->>HV: Return ciphertext only ✗
+    Note right of HV: Sees random bytes<br/>No decryption key
+
+    HV->>RMP: Attempt to remap page
+    RMP-->>HV: DENIED - page is private ✗
+    Note right of HV: #VC exception or<br/>VM termination
+                    </div>
+                </div>
+                <div class="diagram-description">
+                    <div class="description-title">Key Steps</div>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">Memory encryption/decryption happens automatically in the CPU's memory controller</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">RMP (Reverse Map Table) prevents hypervisor from remapping or accessing private pages</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">Hypervisor can only see encrypted ciphertext - no access to decryption keys</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
+                            <span class="step-text">Any tampering attempt triggers hardware exception or VM termination</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Azure GPU TEE Sequence -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-title">
+                        <div class="diagram-icon icon-gpu">🎮</div>
+                        <h3>Confidential GPU Initialization (H100)</h3>
+                    </div>
+                    <span class="diagram-badge badge-gpu">NCC H100 v5</span>
+                </div>
+                <div class="diagram-content">
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🤖 AI/ML Application
+    participant Driver as 🔧 NVIDIA Driver (in TEE)
+    participant CPU as 🔐 CPU TEE (SEV-SNP)
+    participant PCIe as 🔗 PCIe Bus
+    participant GPU as 🎮 H100 GPU
+    participant HBM as 💾 GPU HBM3 Memory
+
+    Note over Driver,GPU: Secure Channel Establishment
+    Driver->>GPU: Initiate SPDM session
+    GPU->>GPU: On-die RoT generates session key
+    GPU-->>Driver: SPDM challenge-response
+    Driver->>Driver: Verify GPU attestation
+    Driver-->>GPU: Establish AES-GCM channel ✓
+
+    Note over App,HBM: Secure Data Transfer
+    App->>Driver: cudaMemcpy(data, GPU)
+    Driver->>CPU: Encrypt data for GPU
+    CPU->>CPU: AES-GCM encrypt + sign
+    CPU-->>PCIe: Encrypted bounce buffer
+    PCIe->>GPU: Ciphertext over PCIe
+    GPU->>GPU: Decrypt with session key
+    GPU->>HBM: Store in encrypted HBM3
+
+    Note over App,HBM: Secure Computation
+    App->>Driver: Launch CUDA kernel
+    Driver->>GPU: Encrypted kernel + params
+    GPU->>GPU: Decrypt & execute kernel
+    GPU->>HBM: Process in encrypted memory
+    HBM-->>GPU: Encrypted results
+    GPU->>PCIe: Encrypt output for CPU
+    PCIe-->>Driver: Return to TEE
+    Driver-->>App: Decrypted results ✓
+
+    Note over Driver,GPU: Combined Attestation
+    App->>Driver: Request attestation
+    Driver->>CPU: Get CPU attestation report
+    Driver->>GPU: Get GPU attestation report
+    Driver->>Driver: Combine reports
+    Driver-->>App: Joint CPU+GPU evidence
+                    </div>
+                </div>
+                <div class="diagram-description">
+                    <div class="description-title">Key Steps</div>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">SPDM session establishes encrypted channel between CPU TEE and GPU using AES-GCM</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">Data traverses PCIe bus encrypted - even physical interposers see only ciphertext</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">GPU HBM3 memory (94GB) is encrypted with hardware key in GPU's on-die RoT</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
+                            <span class="step-text">Combined attestation proves both CPU and GPU are in confidential mode</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GCP Section -->
+        <section class="provider-section">
+            <div class="provider-header">
+                <div class="provider-logo gcp-logo">G</div>
+                <div class="provider-title">
+                    <h2>Google Cloud Platform</h2>
+                    <p>AMD SEV/SEV-SNP & Intel TDX Confidential Virtual Machines</p>
+                </div>
+            </div>
+
+            <!-- GCP Boot Sequence -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-title">
+                        <div class="diagram-icon icon-boot">⚡</div>
+                        <h3>CVM Boot Sequence</h3>
+                    </div>
+                    <span class="diagram-badge badge-tdx">Intel TDX</span>
+                </div>
+                <div class="diagram-content">
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User as 👤 User/Tenant
+    participant GCE as ☁️ Compute Engine API
+    participant Titan as 🔒 Google Titanium
+    participant Host as 🖥️ Host Server
+    participant TDX as 🔐 Intel TDX Module
+    participant CVM as 🛡️ Trust Domain (TD)
+
+    User->>GCE: Create Confidential VM (C3 + TDX)
+    GCE->>Titan: Verify host integrity
+    Titan-->>GCE: Host attestation ✓
+    GCE->>Host: Allocate TDX-capable host
+
+    rect rgb(20, 30, 50)
+        Note over Host,TDX: TDX Initialization (SEAM Mode)
+        Host->>TDX: SEAMCALL - Create TD
+        TDX->>TDX: Enter Secure Arbitration Mode
+        TDX->>TDX: Generate TD encryption key (ephemeral)
+        TDX->>TDX: Initialize TDCS (TD Control Structure)
+        TDX->>TDX: Configure EPT (Extended Page Tables)
+    end
+
+    rect rgb(20, 40, 60)
+        Note over TDX,CVM: Trust Domain Creation
+        TDX->>CVM: Allocate encrypted memory pages
+        TDX->>CVM: Load signed UEFI (OVMF)
+        CVM->>CVM: UEFI measures itself → MRTD
+        CVM->>CVM: Initialize vTPM
+        CVM->>CVM: Verify launch measurement
+    end
+
+    rect rgb(20, 50, 20)
+        Note over CVM: Guest OS Boot
+        CVM->>CVM: Load bootloader (GRUB2)
+        CVM->>CVM: Load Linux kernel
+        CVM->>CVM: Kernel sees normal memory
+        CVM->>CVM: td_guest module loaded
+        CVM-->>User: VM Ready ✓
+    end
+                    </div>
+                </div>
+                <div class="diagram-description">
+                    <div class="description-title">Key Steps</div>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">Google Titanium chip verifies host integrity before VM placement</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">TDX Module runs in SEAM mode - isolated from hypervisor with its own encryption keys</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">MRTD (Measurement Register for TD) captures launch-time measurements</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
+                            <span class="step-text">Guest kernel loads td_guest module for attestation API access</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GCP Attestation Sequence -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-title">
+                        <div class="diagram-icon icon-attest">✓</div>
+                        <h3>Remote Attestation Flow</h3>
+                    </div>
+                    <span class="diagram-badge badge-tdx">Intel TDX</span>
+                </div>
+                <div class="diagram-content">
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 📱 Application
+    participant Guest as 🛡️ TD Guest
+    participant TDX as 🔐 TDX Module
+    participant QE as 🔏 Quoting Enclave (SGX)
+    participant ITA as 🌐 Intel Trust Authority
+    participant KMS as 🔑 Cloud KMS
+
+    App->>Guest: Request attestation
+    Guest->>TDX: TDCALL[TDG.MR.REPORT]
+    
+    rect rgb(20, 30, 50)
+        Note over TDX: Generate TD Report
+        TDX->>TDX: Collect measurements
+        Note right of TDX: - MRTD (launch)<br/>- RTMR[0-3] (runtime)<br/>- MRCONFIGID<br/>- MROWNER
+        TDX->>TDX: Sign with TDX Report Key
+        TDX-->>Guest: Return TD Report
+    end
+
+    Guest->>QE: Request Quote (via VMM)
+    
+    rect rgb(30, 40, 30)
+        Note over QE: Quoting Enclave (SGX)
+        QE->>QE: Verify TD Report MAC
+        QE->>QE: Sign with ECDSA Attestation Key
+        QE-->>Guest: Return TD Quote
+    end
+
+    Guest->>ITA: Submit TD Quote
+    
+    rect rgb(20, 40, 60)
+        Note over ITA: Intel Trust Authority
+        ITA->>ITA: Verify quote signature
+        ITA->>ITA: Check Intel certificate chain
+        ITA->>ITA: Validate TCB level
+        ITA->>ITA: Apply customer policy
+    end
+
+    alt Quote Valid
+        ITA-->>Guest: Attestation token (signed)
+        Guest->>KMS: Request secrets (with token)
+        KMS-->>App: Release secrets ✓
+    else Quote Invalid
+        ITA-->>Guest: Attestation failed ✗
+    end
+                    </div>
+                </div>
+                <div class="diagram-description">
+                    <div class="description-title">Key Steps</div>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">TDCALL instruction requests attestation report from TDX Module</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">Quoting Enclave (running in SGX) converts TD Report to remotely verifiable Quote</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">Intel Trust Authority provides operator-independent attestation verification</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
+                            <span class="step-text">Customer policy can enforce specific TCB versions and measurement values</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GCP SEV-SNP Boot Sequence -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-title">
+                        <div class="diagram-icon icon-boot">⚡</div>
+                        <h3>CVM Boot Sequence (AMD)</h3>
+                    </div>
+                    <span class="diagram-badge badge-sev">AMD SEV-SNP</span>
+                </div>
+                <div class="diagram-content">
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User as 👤 User/Tenant
+    participant GCE as ☁️ Compute Engine API
+    participant Host as 🖥️ Host Server
+    participant KVM as KVM Hypervisor
+    participant ASP as 🔐 AMD Secure Processor
+    participant CVM as 🛡️ Confidential VM
+
+    User->>GCE: Create Confidential VM (N2D + SNP)
+    GCE->>Host: Select AMD Milan/Genoa host
+    Host->>KVM: Initialize SNP-enabled VM
+
+    rect rgb(40, 20, 20)
+        Note over KVM,ASP: SNP Guest Creation
+        KVM->>ASP: SNP_LAUNCH_START
+        ASP->>ASP: Generate GCTX (Guest Context)
+        ASP->>ASP: Derive VM encryption key
+        KVM->>ASP: SNP_LAUNCH_UPDATE (initial pages)
+        ASP->>ASP: Encrypt & measure pages
+        ASP->>ASP: Update launch digest
+        KVM->>ASP: SNP_LAUNCH_FINISH
+        ASP-->>KVM: Guest ready, return ID block
+    end
+
+    rect rgb(20, 40, 40)
+        Note over ASP,CVM: Secure Boot
+        ASP->>CVM: Start in encrypted memory
+        CVM->>CVM: Google-signed UEFI boots
+        CVM->>CVM: Initialize vTPM (Google-managed)
+        CVM->>CVM: Measure boot chain
+        CVM->>CVM: Load OS kernel
+    end
+
+    CVM-->>User: VM Ready - workload deployed ✓
+    
+    Note over User,CVM: Later: Guest Attestation
+    User->>CVM: sevguest get-report
+    CVM->>ASP: SNP_GUEST_REQUEST
+    ASP-->>CVM: SNP Report (VCEK signed)
+    CVM-->>User: Hardware evidence for verification
+                    </div>
+                </div>
+                <div class="diagram-description">
+                    <div class="description-title">Key Steps</div>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">SNP_LAUNCH_* sequence creates cryptographically measured guest context</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">Google provides signed UEFI firmware with verifiable launch measurements</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">vTPM is Google-managed (SEV) or hardware-backed (SEV-SNP)</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
+                            <span class="step-text">sevguest tool allows direct hardware attestation from inside the VM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GCP Runtime Memory Protection -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-title">
+                        <div class="diagram-icon icon-runtime">🔒</div>
+                        <h3>Runtime Memory Protection</h3>
+                    </div>
+                    <span class="diagram-badge badge-tdx">Intel TDX</span>
+                </div>
+                <div class="diagram-content">
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 📱 TD Application
+    participant TD as 🛡️ Trust Domain
+    participant TDX as 🔐 TDX Module
+    participant TME as 🔑 TME-MK Engine
+    participant RAM as 💾 Physical RAM
+    participant VMM as ⚠️ VMM/Hypervisor
+
+    Note over App,RAM: Normal Memory Access (TD internal)
+    App->>TD: Access virtual address
+    TD->>TDX: Memory access via SEPT
+    TDX->>TDX: Verify TD owns page (SEPT walk)
+    TDX->>TME: Request decryption (KeyID = TD's key)
+    TME->>RAM: Read encrypted cache line
+    RAM-->>TME: Return ciphertext
+    TME->>TME: AES-XTS decrypt (TD KeyID)
+    TME-->>App: Plaintext data ✓
+
+    Note over VMM,RAM: VMM Access Attempt
+    VMM->>RAM: Direct memory read
+    RAM-->>VMM: Returns ciphertext ✗
+    Note right of VMM: No key access
+
+    VMM->>TDX: Attempt EPT modification
+    TDX->>TDX: Check SEPT ownership
+    TDX-->>VMM: #VE (Virtualization Exception) ✗
+
+    Note over TDX: Integrity Check
+    TDX->>TDX: Verify MAC on page access
+    alt Integrity Valid
+        TDX-->>TD: Allow access ✓
+    else Integrity Violation
+        TDX->>TDX: Terminate TD immediately
+        Note over TD: Security violation detected
+    end
+                    </div>
+                </div>
+                <div class="diagram-description">
+                    <div class="description-title">Key Steps</div>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">TME-MK (Total Memory Encryption - Multi-Key) provides per-TD encryption keys</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">SEPT (Secure EPT) tracks page ownership - VMM cannot modify TD's page tables</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">VMM access triggers #VE exception - cannot read or write TD memory</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
+                            <span class="step-text">Memory integrity checking detects tampering and terminates TD if violated</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section class="comparison-section">
+            <div class="comparison-header">
+                <h2>Sequence Flow Comparison</h2>
+                <p>Azure vs GCP attestation and key release timelines</p>
+            </div>
+
+            <div class="timeline-grid">
+                <div class="timeline-card">
+                    <div class="timeline-header">
+                        <div class="provider-logo azure-logo" style="width:32px;height:32px;font-size:0.8rem;">Az</div>
+                        <h4>Azure Attestation Timeline</h4>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+0ms</div>
+                            <div class="timeline-detail">
+                                <h5>Boot Start</h5>
+                                <p>AMD SP generates VM encryption key</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+500ms</div>
+                            <div class="timeline-detail">
+                                <h5>UEFI Init</h5>
+                                <p>Secure Boot validates firmware chain</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+2s</div>
+                            <div class="timeline-detail">
+                                <h5>vTPM Ready</h5>
+                                <p>PCR measurements complete</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+15s</div>
+                            <div class="timeline-detail">
+                                <h5>OS Running</h5>
+                                <p>Guest attestation tools available</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+16s</div>
+                            <div class="timeline-detail">
+                                <h5>Attestation</h5>
+                                <p>SNP report → Azure Attestation → Key Vault release</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-card">
+                    <div class="timeline-header">
+                        <div class="provider-logo gcp-logo" style="width:32px;height:32px;font-size:0.8rem;">G</div>
+                        <h4>GCP Attestation Timeline</h4>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+0ms</div>
+                            <div class="timeline-detail">
+                                <h5>Boot Start</h5>
+                                <p>TDX Module creates Trust Domain</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+400ms</div>
+                            <div class="timeline-detail">
+                                <h5>UEFI Init</h5>
+                                <p>Google-signed firmware measured to MRTD</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+1.5s</div>
+                            <div class="timeline-detail">
+                                <h5>vTPM Ready</h5>
+                                <p>GceNonHostInfo event logged</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+12s</div>
+                            <div class="timeline-detail">
+                                <h5>OS Running</h5>
+                                <p>td_guest / sev_guest modules loaded</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-phase">T+13s</div>
+                            <div class="timeline-detail">
+                                <h5>Attestation</h5>
+                                <p>TD Quote → Intel Trust Authority → KMS release</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Confidential VM Sequence Diagrams • Hardware TEE Architecture Reference</p>
+            <p style="margin-top:8px;font-size:0.8rem;color:var(--text-muted);">Based on AMD SEV-SNP, Intel TDX specifications and cloud provider documentation</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            sequence: {
+                useMaxWidth: true,
+                diagramMarginX: 20,
+                diagramMarginY: 20,
+                actorMargin: 50,
+                width: 180,
+                height: 50,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 35,
+                mirrorActors: false,
+                bottomMarginAdj: 10,
+                rightAngles: false,
+                showSequenceNumbers: false
+            }
+        });
+    </script>
+</body>
+</html>
